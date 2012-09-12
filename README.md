@@ -1,7 +1,3 @@
-* 关键点、連老手都会感兴趣、让新手可以上路
-* 杂志不超过 5 页、
-* 原创文章： 150 元、千字
-
 # 前端模块加载策略
 ## 前端模块的理想实践
 
@@ -89,7 +85,12 @@
 </module>
 ```
 
-你只要用 /mini?module=page_a&type=js 就可以得到 page_a 合并与最小化混淆过后的 JavaScript 档案。这样一下子就解决了傳統加在模式中请求数量与内容未压缩的问题。
+你只要在浏览器的网址列输入以下的网址：
+
+``` 
+http://localhost/mini?module=page_a&type=js 
+```
+就可以得到 page_a 合并与最小化混淆过后的 JavaScript 档案。这样一下子就解决了傳統加在模式中请求数量与内容未压缩的问题。
 
 ### 页层级设定的整体架构
 
@@ -111,18 +112,39 @@
 
 ### 模块层级设定的整体架构
 
-程序员在此模式开始要定义自身页面模块的依赖关系，下图的三个程序员各自开发不同的页面模块，而依赖的模块重复或不重复的都有。
-
 ![img](module-level.png)
 
-RequireJS
-YUI 介绍（以 DataTable 为例）
-如何实作：YUI Combo、
+1. 程序员在此模式开始要定义自身页面模块的依赖关系，下图的三个程序员各自开发不同的页面模块，而依赖的模块重复或不重复的都有。
+2. 页面的 Controller 会指定要载入的页面模块有哪些，但不需提供依赖的那些模块，会由加载的 Loader 自动计算，得到所有应该要载入的模块。
+3. Loader 会与服务器端交互，透过一个聪明的机制（后面解释）将模块分组并做合并与压缩，再用并行下载的方式将分组的请求给下载到浏览器上。
 
+### 定义模块的依赖关系
 
+前面开头我们就提到 AMD 的模块规范，其中很重要的设定便是在定义每个模块的依赖关系，例如：
 
+````javascript
+// AMD Moduledefine(“editor”, [‘a’,’b’,’c’], function () {    function Editor { /* Constructor */ }    return Editor;});require(["editor"], function (Editor) {    new Editor();});````
 
-我将著重于网站的浏览器端、以自身过去在台湾 Yahoo! 知识+ 及 miiiCasa 的实作经验介绍数种 JavaScript / CSS 模块的切分及加载模式。
-内容将从传统 script 与 link 加载、透过页的组态设定加载（以 RequireJS 为范例）、以模块为单位加载（以 YUI 3 为范例）、
-同步加载（以 Big Pipe 为范例）分析各种架构的优点与缺点，期待能让厅者能够轻松应用在自己网站的开发上面为目标。
+* define 定义了 editor 模块要载入 a.js, b.js, c.js 等三个模块。
+* require 是在用的时候只要指定 editor，并不需要指定相依模块。
 
+RequireJS 是目前最多人用的 AMD 架构实作。
+
+### 让 Loader 载入相依的模块档案
+
+以 RequireJS 来说，只要有定义好依赖关系，它就会一个一个地将相依的模块自动载入，并不需要任何的配置。而当想要发布到线上时当然得合并与最小化，你可以用 nodeJS、透过它所提供的 r.js 把你把这件事给解决掉。
+
+但是我们在页面层级设定提到过预先 Build 与最小化将会造成「发布时间过久」与「线上调适困难」等两个问题，甚至在开发阶段若请求过多也将是个困扰，这都是 RequireJS 没办法解决的。我们必须找一个另外的解决方案！
+
+### YUI3 - 更好的模块加载方式
+
+YUI3 模块依赖关系设定与 AMD 如出一辙：
+
+```javascript
+// YUI ModuleYUI.add("editor", function () {    function Editor { /* Constructor */ }    Y.Editor = Editor;    }, “VERSION”, {requires:[‘a’,’b’,’c’]});YUI.use("editor", function (Y) {    new Y.Editor();});```
+
+但它的 Loader 的下载方式非常令人激赏，它会利用一种叫 Combo Handler 的机制，将线上的档案直接以 GET 的方式指定路径、动态地合并并且最小化：
+
+```
+http://yui.yahooapis.com/combo?                         <模块 1 的对应路径>&                         <模块 2 的对应路径>&                         <模块 3 的对应路径>&                          ...                         <模块 n 的对应路径>```                    
+你可能会想到 GET 的长度限制，但聪明的 YUI Loader 早就考虑好了，它检查了「模块载入的先受顺序」、「模块总数量」、「目前浏览器的 GET 长度限制」、「浏览器同时检查数量」等资讯，自动将向 Combo Handler 的情求分散为数个，并且并行下载！
