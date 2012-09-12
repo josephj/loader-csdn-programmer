@@ -123,7 +123,17 @@ http://localhost/mini?module=page_a&type=js
 前面开头我们就提到 AMD 的模块规范，其中很重要的设定便是在定义每个模块的依赖关系，例如：
 
 ````js
-// AMD Moduledefine(“editor”, [‘a’,’b’,’c’], function () {    function Editor { /* Constructor */ }    return Editor;});require(["editor"], function (Editor) {    new Editor();});````
+// AMD Module
+define("editor", ["a", "b", "c"], function () {
+    function Editor {
+        /* Constructor */
+    }
+    return Editor;
+});
+require(["editor"], function (Editor) {
+    new Editor();
+});
+````
 
 * define 定义了 editor 模块要载入 a.js, b.js, c.js 等三个模块。
 * require 是在用的时候只要指定 editor，并不需要指定相依模块。
@@ -141,17 +151,38 @@ RequireJS 是目前最多人用的 AMD 架构实作。
 YUI3 模块依赖关系设定与 AMD 如出一辙：
 
 ```js
-// YUI ModuleYUI.add("editor", function () {    function Editor { /* Constructor */ }    Y.Editor = Editor;    }, “VERSION”, {requires:[‘a’,’b’,’c’]});YUI.use("editor", function (Y) {    new Y.Editor();});```
+// YUI Module
+YUI.add("editor", function () {
+    function Editor {
+        /* Constructor */
+    }
+    Y.Editor = Editor;
+}, "VERSION", {requires:["a", "b", "c"]});
+YUI.use("editor", function (Y) {
+    new Y.Editor();
+});
+```
 
 但它的 Loader 的下载方式非常令人激赏，它会利用一种叫 Combo Handler 的机制，将线上的档案直接以 GET 的方式指定路径、动态地合并并且最小化：
 
 ```
-http://yui.yahooapis.com/combo?                         <模块 1 的对应路径>&                         <模块 2 的对应路径>&                         <模块 3 的对应路径>&                          ...                         <模块 n 的对应路径>```                    
-你可能会想到 GET 的长度限制，但聪明的 YUI Loader 早就考虑好了，它检查了「模块载入的先受顺序」、「模块总数量」、「目前浏览器的 GET 长度限制」、「浏览器同时检查数量」等资讯，自动将向 Combo Handler 的情求分散为数个，并且并行下载。
-### 动手解决问题！
-YUI 非常贴近我们的需求，但还是有一些问题存在：
+http://yui.yahooapis.com/combo?
+                         <模块 1 的对应路径>&
+                         <模块 2 的对应路径>&
+                         <模块 3 的对应路径>&
+                          ...
+                         <模块 n 的对应路径>
+```                    
 
-* 雅虎的 Combo Handler 是否有开源或替代方案呢？* YUI 的组态设定非常地复杂、不易维护：记载模块依赖关系的设定，但是密密麻麻地，维护相当不易。
+你可能会想到 GET 的长度限制，但聪明的 YUI Loader 早就考虑好了，它检查了「模块载入的先受顺序」、「模块总数量」、「目前浏览器的 GET 长度限制」、「浏览器同时检查数量」等资讯，自动将向 Combo Handler 的情求分散为数个，并且并行下载。
+
+
+### 动手解决问题！
+
+YUI 非常贴近我们的需求，但还是有一些问题存在：
+
+* 雅虎的 Combo Handler 是否有开源或替代方案呢？
+* YUI 的组态设定非常地复杂、不易维护：记载模块依赖关系的设定，但是密密麻麻地，维护相当不易。
 * CSS 不适合做动态加载：在大多数的情况中，我们会将 CSS 以 &lt;link/&gt; 放在网页的最前面，让使用者在 HTML 一载入就可以看到正确的 UI，当然还有一些效能考量。但不管 YUI 与 RequireJS 都是走动态加载的作法。
 
 第一个问题很容易解决，网路上类似 Combo Handler 的机制还真的不少，像 PHP5 的 Minify、nodeJS 的   combohandler 都是这样的产品，稍微设定一下，很容易就可以跑起来了。
