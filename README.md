@@ -13,8 +13,8 @@
 
 前面提到雅虎的「页面模块开发模式」，则是把页面依结构切分成一个个小的 &lt;div/&gt; 模块，原则上每一个页面模块都各有自己的 HTML (例如 PHP 是用 include_once 来载入)、CSS 与 JavaScript 档案。好处是让每个开发人员都能专注于单一模块的开发上、而非去烦恼整个页面的架构与布局。重复利用在这样的开发模式下并不是最重要的事情。
 
-<img src="./website.png" height="300">
-![image](div-modules.png)
+![image](http://farm9.staticflickr.com/8033/7980180441_741f9f4b03.jpg)
+![image](http://farm9.staticflickr.com/8030/7980180886_c650d9f767.jpg)
 
 以上的頁面共有三个页面模块：上面的「条件筛选模块」(\_filter)、左边的「资讯模块」(\_info)、右侧的「列表模块」(\_list)，都各自有自己的 HTML、CSS、与 JavaScript。
 
@@ -94,7 +94,7 @@ http://localhost/mini?module=page_a&type=js
 
 ### 页层级设定的整体架构
 
-![image](page-level.png)
+![image](http://farm9.staticflickr.com/8034/7980180579_0965366aaa_z.jpg)
 
 虽然每位程序员专注于开发自己的模块、但都得共同修改同一个设定档，此设定档记载了每页要载入的模块有哪些。是一个很直觉的作法。
 
@@ -112,7 +112,7 @@ http://localhost/mini?module=page_a&type=js
 
 ### 模块层级设定的整体架构
 
-![img](module-level.png)
+![img](http://farm9.staticflickr.com/8313/7980181036_a23e6ef49d_z.jpgg)
 
 1. 程序员在此模式开始要定义自身页面模块的依赖关系，下图的三个程序员各自开发不同的页面模块，而依赖的模块重复或不重复的都有。
 2. 页面的 Controller 会指定要载入的页面模块有哪些，但不需提供依赖的那些模块，会由加载的 Loader 自动计算，得到所有应该要载入的模块。
@@ -147,4 +147,63 @@ YUI3 模块依赖关系设定与 AMD 如出一辙：
 
 ```
 http://yui.yahooapis.com/combo?                         <模块 1 的对应路径>&                         <模块 2 的对应路径>&                         <模块 3 的对应路径>&                          ...                         <模块 n 的对应路径>```                    
-你可能会想到 GET 的长度限制，但聪明的 YUI Loader 早就考虑好了，它检查了「模块载入的先受顺序」、「模块总数量」、「目前浏览器的 GET 长度限制」、「浏览器同时检查数量」等资讯，自动将向 Combo Handler 的情求分散为数个，并且并行下载！
+你可能会想到 GET 的长度限制，但聪明的 YUI Loader 早就考虑好了，它检查了「模块载入的先受顺序」、「模块总数量」、「目前浏览器的 GET 长度限制」、「浏览器同时检查数量」等资讯，自动将向 Combo Handler 的情求分散为数个，并且并行下载。
+### 动手解决问题！
+YUI 非常贴近我们的需求，但还是有一些问题存在：
+
+* 雅虎的 Combo Handler 是否有开源或替代方案呢？* YUI 的组态设定非常地复杂、不易维护：记载模块依赖关系的设定，但是密密麻麻地，维护相当不易。
+* CSS 不适合做动态加载：在大多数的情况中，我们会将 CSS 以 &lt;link/&gt; 放在网页的最前面，让使用者在 HTML 一载入就可以看到正确的 UI，当然还有一些效能考量。但不管 YUI 与 RequireJS 都是走动态加载的作法。
+
+第一个问题很容易解决，网路上类似 Combo Handler 的机制还真的不少，像 PHP5 的 Minify、nodeJS 的   combohandler 都是这样的产品，稍微设定一下，很容易就可以跑起来了。
+
+后面两个问题则需要写程式解决，我的解法是做一个 PHP 叫 StaticLoader 的 Class (https://github.com/josephj/static-loader)。使用时它会去读取模块的设定档：一边产出 YUI 那个复杂的组态档、一边针对 CSS 做特别处理、最后用 link 生成在页面上。
+
+#### 模块的设定档
+
+所有的模块都集中在一个设定档、以下面的方式指定
+
+```php
+    "_filter" => array(
+        "group" => "demo",
+        "js"    => "javascripts/_filter.js",
+        "css"   => "stylesheets/_filter.css",
+        "requires" => array(
+            "module", "node-base", "cookie",
+        ),  
+    ),  
+```
+
+你看到了 JavaScript 与 CSS 的路径、并且也指定了其依赖的关系。
+
+#### 指定所要用的页面模块并且输出
+
+在 Controller 中，只要指定这个页面有哪些页面模块：
+
+```php
+require_once "StaticLoader.php";
+$loader = new StaticLoader("config.php");
+$loader->set("_filter", "_list", "_info");
+echo $loader->load();
+```
+
+即可输出对应的 link 标签与模块依赖关系的设定。
+
+![image](http://farm9.staticflickr.com/8304/7980180773_ca60fe2667_b.jpg)
+
+之后就如我们所预期的，它将会去把所有此页面依赖模块的 JavaScript 与 CSS 档案，以 Combo Handler 的方式、从服务器上下载回来。
+
+### 模块层级载入有什么好处
+
+* Build 更有效率：在发布到线上这一步我们不再处理 CSS 与 JavaScript 档案的合并与压缩，就直接将档案复制一份丢到服务器上，由 Combo Handler 本身就有的机制来做合并、压缩、缓存。
+* 可以直接线上做调势：原始档案皆存在，可以直接修正问题，只要把 Minify 对应的缓存砍掉即可。
+* 维护性提升：開發者只定义自身模块的相依性、整页所需模塊由 YUI Loader 計算後自動載入，管理容易许多。也才是真正的「模块化开发」！
+
+## 结语
+
+页层级的设置可想成「中央集权」，设置容易。初期一目了然，但规模变大就管理不易。模块层级設定则是「地方自治」设置较复杂、对长期维护较有效率。配合相依性计算、自动合并、非同步下载等机制、让页面模块真的做到随插即用。
+
+BigPipe 是很多网站想实作的目标，但首先你得「建立模块相依性」、「采用页面模块开发模式」、先建立模块导向开发模式才可能有实作的机会，鼓励较具规模的网站开始往这方向移动。
+
+* 线上完整范例：http://josephj.com/lab/2012/github-chinese-developer/
+* 完整原始码：https://github.com/josephj/github-chinese-developer
+
