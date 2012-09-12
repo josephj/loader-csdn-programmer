@@ -112,7 +112,7 @@ http://localhost/mini?module=page_a&type=js
 
 ### 模块层级设定的整体架构
 
-![img](http://farm9.staticflickr.com/8313/7980181036_a23e6ef49d_z.jpgg)
+![img](http://farm9.staticflickr.com/8313/7980181036_a23e6ef49d_z.jpg)
 
 1. 程序员在此模式开始要定义自身页面模块的依赖关系，下图的三个程序员各自开发不同的页面模块，而依赖的模块重复或不重复的都有。
 2. 页面的 Controller 会指定要载入的页面模块有哪些，但不需提供依赖的那些模块，会由加载的 Loader 自动计算，得到所有应该要载入的模块。
@@ -122,7 +122,7 @@ http://localhost/mini?module=page_a&type=js
 
 前面开头我们就提到 AMD 的模块规范，其中很重要的设定便是在定义每个模块的依赖关系，例如：
 
-````javascript
+````js
 // AMD Moduledefine(“editor”, [‘a’,’b’,’c’], function () {    function Editor { /* Constructor */ }    return Editor;});require(["editor"], function (Editor) {    new Editor();});````
 
 * define 定义了 editor 模块要载入 a.js, b.js, c.js 等三个模块。
@@ -140,7 +140,7 @@ RequireJS 是目前最多人用的 AMD 架构实作。
 
 YUI3 模块依赖关系设定与 AMD 如出一辙：
 
-```javascript
+```js
 // YUI ModuleYUI.add("editor", function () {    function Editor { /* Constructor */ }    Y.Editor = Editor;    }, “VERSION”, {requires:[‘a’,’b’,’c’]});YUI.use("editor", function (Y) {    new Y.Editor();});```
 
 但它的 Loader 的下载方式非常令人激赏，它会利用一种叫 Combo Handler 的机制，将线上的档案直接以 GET 的方式指定路径、动态地合并并且最小化：
