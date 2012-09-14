@@ -95,6 +95,7 @@ http://localhost/mini?module=page_a&type=js
 
 ### 页层级设定的整体架构
 
+![image](page-level.svg)
 ![image](http://farm9.staticflickr.com/8034/7980180579_0965366aaa_z.jpg)
 * 图 3 - 页层级设定的架构示意图
 
@@ -114,6 +115,7 @@ http://localhost/mini?module=page_a&type=js
 
 ### 模块层级设定的整体架构
 
+![image](module-level.svg)
 ![img](http://farm9.staticflickr.com/8034/7980180579_0965366aaa_z.jpg)
 * 图 4 - 模块层级设定的架构示意图
 
