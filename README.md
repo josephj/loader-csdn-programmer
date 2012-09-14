@@ -35,8 +35,6 @@
 <script src="_list.js"></script>
 <script src="_info.js"></script>
 <script src="base.js"></script>
-</head>
-<body>
 ```
 
 传统加载模式的問題為：
