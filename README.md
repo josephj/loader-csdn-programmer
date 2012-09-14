@@ -14,7 +14,10 @@
 前面提到雅虎的「页面模块开发模式」，则是把页面依结构切分成一个个小的 &lt;div/&gt; 模块，原则上每一个页面模块都各有自己的 HTML (例如 PHP 是用 include_once 来载入)、CSS 与 JavaScript 档案。好处是让每个开发人员都能专注于单一模块的开发上、而非去烦恼整个页面的架构与布局。重复利用在这样的开发模式下并不是最重要的事情。
 
 ![image](http://farm9.staticflickr.com/8033/7980180441_741f9f4b03_b.jpg)
+* 图 1 - 范例网页：两岸三地的开发者
+
 ![image](http://farm9.staticflickr.com/8030/7980180886_c650d9f767_z.jpg)
+* 图 2 - 两岸三地的开发者网页的页面模块结构图
 
 以上的頁面共有三个页面模块：上面的「条件筛选模块」(\_filter)、左边的「资讯模块」(\_info)、右侧的「列表模块」(\_list)，都各自有自己的 HTML、CSS、与 JavaScript。
 
@@ -93,6 +96,7 @@ http://localhost/mini?module=page_a&type=js
 ### 页层级设定的整体架构
 
 ![image](http://farm9.staticflickr.com/8034/7980180579_0965366aaa_z.jpg)
+* 图 3 - 页层级设定的架构示意图
 
 虽然每位程序员专注于开发自己的模块、但都得共同修改同一个设定档，此设定档记载了每页要载入的模块有哪些。是一个很直觉的作法。
 
@@ -111,6 +115,7 @@ http://localhost/mini?module=page_a&type=js
 ### 模块层级设定的整体架构
 
 ![img](http://farm9.staticflickr.com/8034/7980180579_0965366aaa_z.jpg)
+* 图 4 - 模块层级设定的架构示意图
 
 1. 程序员在此模式开始要定义自身页面模块的依赖关系，下图的三个程序员各自开发不同的页面模块，而依赖的模块重复或不重复的都有。
 2. 页面的 Controller 会指定要载入的页面模块有哪些，但不需提供依赖的那些模块，会由加载的 Loader 自动计算，得到所有应该要载入的模块。
@@ -215,9 +220,10 @@ $loader->set("_filter", "_list", "_info");
 echo $loader->load();
 ```
 
-即可输出对应的 link 标签与模块依赖关系的设定。
+即可输出对应的 link、script 标签与模块依赖关系的设定。
 
 ![image](http://farm9.staticflickr.com/8304/7980180773_ca60fe2667_b.jpg)
+* 图 5 - 使用 StaticLoader Class 输出复杂的 &lt;link/&gt; 与 &lt;script/&gt; 标签与 YUI 模块的设定。
 
 之后就如我们所预期的，它将会去把所有此页面依赖模块的 JavaScript 与 CSS 档案，以 Combo Handler 的方式、从服务器上下载回来。
 
